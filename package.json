@@ -1,0 +1,24 @@
+{
+  "name": "streamtube",
+  "version": "0.0.1",
+  "description": "Web App to watch youtube and other video sites",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Divyangchauhan/streamtube.git"
+  },
+  "author": "Divyang Chauhan",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Divyangchauhan/streamtube/issues"
+  },
+  "homepage": "https://github.com/Divyangchauhan/streamtube#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongoose": "^5.4.19"
+  }
+}
