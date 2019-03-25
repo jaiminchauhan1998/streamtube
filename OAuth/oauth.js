@@ -10,16 +10,25 @@ var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
     process.env.USERPROFILE) + '/.credentials/';
 var TOKEN_PATH = TOKEN_DIR + 'google-apis-nodejs-quickstart.json';
 
-// Load client secrets from a local file.
-fs.readFile('../config/client_secret.json', function processClientSecrets(err, content) {
+const Token = require('../models/Token');
+const User = require('../models/User')
+
+
+
+const credential = {};
+
+fs.readFile('./config/client_secret.json', function processClientSecrets(err, content) {
     if (err) {
         console.log('Error loading client secret file: ' + err);
         return;
-    }
-  // Authorize a client with the loaded credentials, then call the YouTube API.
-  //See full code sample for authorize() function code.
-    authorize(JSON.parse(content), {'params': {'mine': 'true', 'part': 'snippet,contentDetails'}}, ()=> console.log('done'));
+	}
+	
+	// store the credentials, in variable.
+	credential.clientSecret = content;
 });
+
+
+
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -45,39 +54,58 @@ function authorize(credentials, requestData, callback) {
         callback(oauth2Client, requestData);
       }
     });
-  }
+}
 
-  function getNewToken(oauth2Client, requestData, callback) {
-    var authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES
-    });
-    console.log('Authorize this app by visiting this url: ', authUrl);
-    var rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    rl.question('Enter the code from that page here: ', function(code) {
-      rl.close();
-      oauth2Client.getToken(code, function(err, token) {
-        if (err) {
-          console.log('Error while trying to retrieve access token', err);
-          return;
-        }
-        oauth2Client.credentials = token;
-        storeToken(token);
-        callback(oauth2Client, requestData);
-      });
-    });
-  }
-  function storeToken(token) {
-    try {
-      fs.mkdirSync(TOKEN_DIR);
-    } catch (err) {
-      if (err.code != 'EEXIST') {
-        throw err;
+function getNewToken(oauth2Client, requestData, callback) {
+  var authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES
+  });
+  
+  console.log('Authorize this app by visiting this url: ', authUrl);
+  
+  var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  rl.question('Enter the code from that page here: ', function(code) {
+    rl.close();
+    oauth2Client.getToken(code, function(err, token) {
+      if (err) {
+        console.log('Error while trying to retrieve access token', err);
+        return;
       }
+      oauth2Client.credentials = token;
+      storeToken(token);
+      callback(oauth2Client, requestData);
+    });
+  });
+}
+
+function storeToken(token) {
+  try {
+    fs.mkdirSync(TOKEN_DIR);
+  } catch (err) {
+    if (err.code != 'EEXIST') {
+      throw err;
     }
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify(token));
-    console.log('Token stored to ' + TOKEN_PATH);
   }
+  User.findOne({ name: req.body.name })
+    .then(user => {
+      if(!user){
+        return res.status(400).json({ email: 'name not found' });
+      }else{
+        const newToken = new Token({
+        user: user.name,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token,
+        scope: token.scope,
+        token_type: token.token_type,
+        expiry_date: token.expiry_date
+        });
+      }
+      newToken.save()
+        .then(user => res.json(user))
+        .catch(err => console.log(err));
+      })
+}    

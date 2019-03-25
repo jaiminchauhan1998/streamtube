@@ -7,6 +7,17 @@ const users = require('./routes/api/users.js');
 const profile = require('./routes/api/profile.js');
 const posts = require('./routes/api/posts.js');
 
+const credential = {};
+
+fs.readFile('./config/client_secret.json', function processClientSecrets(err, content) {
+    if (err) {
+        console.log('Error loading client secret file: ' + err);
+        return;
+	}
+	
+	// store the credentials, in variable.
+	credential.clientSecret = content;
+});
 
 const app = express();
 
