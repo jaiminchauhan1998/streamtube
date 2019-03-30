@@ -11,7 +11,6 @@ const validateLoginInput = require('../../validation/login')
 
 const User = require('../../models/User')
 const key = require('../../config/keys')
-router.get('/test', (req, res) => res.json({msg:"users works"}));
 
 router.post('/register', (req, res) => {
 
@@ -26,15 +25,9 @@ router.post('/register', (req, res) => {
             if(user){
                 return res.status(400).json({ email: 'Email already exist' });
             }else{
-                avatar = gravatar.url(req.body.email, {
-                    s: '200',
-                    r: 'pg',
-                    d: 'mm'
-                });
                 const newUser = new User({
                     name: req.body.name,
                     email: req.body.email,
-                    avatar: avatar,
                     password: req.body.password
                 });
                 bcrypt.genSalt(10, (err, salt) => {
@@ -47,8 +40,7 @@ router.post('/register', (req, res) => {
                     })
                 })
             }
-        })
-    
+        }) 
 })
 
 router.post('/login', (req, res) => {
@@ -90,54 +82,7 @@ router.post('/login', (req, res) => {
 
 router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
     res.json({ msg:'success' });
-});
-
-router.post('/authorize', (req, res) => {
-
-    if (req.headers && req.headers.authorization) {
-        var authorization = headers.authorization;
-        var decoded;
-        try {
-            decoded = jwt.verify(authorization, secret.secretToken);
-        } catch (e) {
-            return res.status(401).send('unauthorized');
-        }
-        var userId = decoded.id;
-        // Fetch the user by id 
-        User.findOne({_id: userId})
-            .then(function(user){
-                
-            });
-    }
-    return res.send(500);
-
-
-    const name = req.body.name;
-    const password = req.body.password;
-    User.findOne({ email })
-        .then(user => {
-            if(!user){
-                errors.email = 'User not found';
-                return res.status(404).json(errors);
-            }
-            bcrypt.compare(password, user.password)
-                .then(isMatch => {
-                    if(isMatch){
-                        const payload = { id: user.id, name: user.name, avatar: user.avatar }
-                        jwt.sign(
-                            payload, 
-                            key.secretOrKey, 
-                            { expiresIn: 1000}, 
-                            (err, token) => {
-                                res.json({success: true, token: 'Bearer ' + token})
-                        } );
-                    }
-                    else {
-                        errors.password = "Password incorrect";
-                        return res.status(400).json(errors);
-                    }
-                })
-        })
+    //return user id and username
 });
 
 module.exports = router;

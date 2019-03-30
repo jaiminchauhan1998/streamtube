@@ -7,7 +7,6 @@ const validator = require('validator');
 const Profile = require('../../models/Profile');
 const User = require('../../models/User');
 
-router.get('/test', (req, res) => res.json({msg:"profile works"}));
 
 router.get('/', passport.authenticate('jwt', { session: false }), (req, res) => {
     const errors = {};
