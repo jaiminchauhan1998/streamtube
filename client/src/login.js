@@ -7,7 +7,7 @@ class Login extends Component {
   render() {
     return (
         <div>
-            <form action="http://localhost:5555/api/users/login" method="post">
+            <form action="http://localhost:5000/api/users/login" method="post">
                 Email:<input type="text" name="email"></input><br />
                 Password:<input type="text" name="password"></input><br />
                 <input type="submit" value="Submit"></input>

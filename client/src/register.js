@@ -7,7 +7,7 @@ class Register extends Component {
   render() {
     return (
         <div>
-            <form action="http://localhost:5555/api/users/register" method="post">
+            <form action="http://localhost:5000/api/users/register" method="post">
                 Name: <input type="text" name="name"></input><br />
                 Email: <input type="text" name="email"></input><br />
                 Password: <input type="text" name="password"></input><br />

@@ -4,13 +4,17 @@ const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport')
-
+const authorize = require('../../oauth/authorize')
 //load input validation
 const validateRegisterInput = require('../../validation/register')
 const validateLoginInput = require('../../validation/login')
 
-const User = require('../../models/User')
-const key = require('../../config/keys')
+const User = require('../../models/User');
+const Token = require('../../models/Token');
+const key = require('../../config/keys');
+
+const app = express();
+app.use(authorize)
 
 router.post('/register', (req, res) => {
 
@@ -24,17 +28,16 @@ router.post('/register', (req, res) => {
     };
 
     User.findOne({
-            email: req.body.email
+            username: req.body.username
         })
         .then(user => {
             if (user) {
                 return res.status(400).json({
-                    email: 'Email already exist'
+                    username: 'username already exist'
                 });
             } else {
                 const newUser = new User({
-                    name: req.body.name,
-                    email: req.body.email,
+                    username: req.body.username,
                     password: req.body.password
                 });
                 bcrypt.genSalt(10, (err, salt) => {
@@ -62,14 +65,13 @@ router.post('/login', (req, res) => {
         return res.status(400).json(errors);
     }
 
-    const email = req.body.email;
     const password = req.body.password;
     User.findOne({
-            email
+            username: req.body.username
         })
         .then(user => {
             if (!user) {
-                errors.email = 'User not found';
+                errors.username = 'User not found';
                 return res.status(404).json(errors);
             }
             bcrypt.compare(password, user.password)
@@ -77,7 +79,7 @@ router.post('/login', (req, res) => {
                     if (isMatch) {
                         const payload = {
                             id: user.id,
-                            name: user.name,
+                            username: user.username,
                             avatar: user.avatar
                         }
                         jwt.sign(
@@ -103,9 +105,51 @@ router.get('/current', passport.authenticate('jwt', {
     session: false
 }), (req, res) => {
     res.json({
-        msg: 'success'
+        msg: 'success',
+        user: req.user.username
     });
     //return user id and username
+});
+router.get('/oauthstatus', passport.authenticate('jwt', {
+    session: false
+}), (req, res) => {
+    if(Token.findOne({username: req.user.username})){
+        res.json({
+            msg: "found"
+        })
+    }
+});
+
+
+router.post('/oauth', passport.authenticate('jwt', {
+    session: false
+}), authorize, (req, res) => {
+    res.send(req.oauthurl)
+});
+
+router.get('/oauthcallback', passport.authenticate('jwt', {
+    session: false
+}), (req, res) => {
+    //use  jwtoken to get user
+    const username = req.username;
+    console.log(username);
+    const code = req.code;
+    oauth2Client.getToken(code, function(err, token) {
+        if (err) {
+            console.log('Error while trying to retrieve access token', err);
+            return;
+        }
+        oauth2Client.credentials = token;
+        const newToken = new Token({
+            username: username,
+            access_token: token.access_token,
+            refresh_token: token.refresh_token,
+            scope: token.scope,
+            token_type: token.token_type,
+            expiry_date: token.expiry_date
+        })
+        newToken.save();
+    });
 });
 
 module.exports = router;
